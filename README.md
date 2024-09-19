@@ -23,6 +23,59 @@ adds matches to you queue.
 
 >will prompt you to choose if multiple matches are found!
 
+### show | ls
+show the current queue.
+
+`Syntax: show`<br>
+`Syntax: ls`
+
+### p | play | pause
+pause/resume playback
+
+`Syntax: p`<br>
+`Syntax: play`<br>
+`Syntax: pause`
+
+### clear
+clears queue
+
+`Syntax: clear`
+
+### next 
+skip to the next song in queue
+
+`Syntax: next`
+
+### prev
+skip to the previous song in queue
+
+`Syntax: prev`
+
+### replay
+replay the current song.
+
+`Syntax: replay`
+
+### playlist 
+playlist creation and playing
+#### new
+saves the current queue as a playlist
+`Syntax: playlist new <name`
+#### load
+load the specified playlist as the queue 
+`Syntax: playlist new <name`
+>replaces the queue!
+
+### exit
+quit the player
+
+`Syntax: exit`
+
+-----
+
+
+
+
 
 
 
