@@ -102,6 +102,14 @@ pub fn init(rx: mpsc::Receiver<String>) {
                             println!("{}", "Nothing in queue".yellow().italic());
                         }
                     }
+                    "prev" => {
+                        if queue.len() != 0 {
+                            current_index = (current_index - 1) % queue.len();
+                            handlers::play(current_index, &queue, &sink);
+                        } else {
+                            println!("{}", "Nothing in queue".yellow().italic());
+                        }
+                    }
                     "exit" => {
                         println!("{}", "Exiting...".yellow().italic());
                         exit(0);
@@ -123,14 +131,14 @@ pub fn init(rx: mpsc::Receiver<String>) {
                     "playlist" => {
                         if recieved_split.len() < 3 {
                             println!("{}", "playlist: Insufficient arguments".red());
-                            println!("{}", "playlist <new|play> [name]".yellow().italic());
+                            println!("{}", "playlist <new|load> [name]".yellow().italic());
                         } else {
                             match recieved_split[1].as_str() {
                                 "new" => {}
                                 "show" | "ls" => {
                                     handlers::show_playlists();
                                 }
-                                "play" => {
+                                "load" => {
                                     println!(
                                         "{} {}",
                                         "Playing from playlist".green(),
@@ -138,11 +146,14 @@ pub fn init(rx: mpsc::Receiver<String>) {
                                     );
                                     handlers::set_playlist(&queue, recieved_split[2].clone());
                                 }
-                                cmd => println!(
-                                    "{} {}",
-                                    "playlist: Unknown command".red(),
-                                    cmd.red().bold()
-                                ),
+                                cmd => {
+                                    println!(
+                                        "{} {}",
+                                        "playlist: Unknown command".red(),
+                                        cmd.red().bold()
+                                    );
+                                    println!("{}", "playlist <new|load> [name]".yellow().italic());
+                                }
                             }
                         }
                     }
@@ -151,7 +162,7 @@ pub fn init(rx: mpsc::Receiver<String>) {
                         println!("{} {}", "Unknown command".red(), cmd.red().bold());
                         println!(
                             "{}",
-                            "<add|clear|exit|next|p|playlist|replay|show>"
+                            "<add|clear|exit|next|p|playlist|prev|replay|show>"
                                 .yellow()
                                 .italic(),
                         );
