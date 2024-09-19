@@ -129,22 +129,42 @@ pub fn init(rx: mpsc::Receiver<String>) {
                         }
                     }
                     "playlist" => {
-                        if recieved_split.len() < 3 {
+                        if recieved_split.len() < 2 {
                             println!("{}", "playlist: Insufficient arguments".red());
-                            println!("{}", "playlist <new|load> [name]".yellow().italic());
+                            println!("{}", "playlist <new|load|show> [name]".yellow().italic());
                         } else {
                             match recieved_split[1].as_str() {
-                                "new" => {}
+                                "new" => {
+                                    if recieved_split.len() < 2 {
+                                        println!(
+                                            "{}",
+                                            "playlist: new: Insufficient arguments".red()
+                                        );
+                                    } else if queue.len() > 0 {
+                                        handlers::make_playlist(&queue, recieved_split[2].clone());
+                                    }
+                                }
                                 "show" | "ls" => {
                                     handlers::show_playlists();
                                 }
                                 "load" => {
-                                    println!(
-                                        "{} {}",
-                                        "Playing from playlist".green(),
-                                        recieved_split[2].green().bold()
-                                    );
-                                    handlers::set_playlist(&queue, recieved_split[2].clone());
+                                    if recieved_split.len() < 2 {
+                                        println!(
+                                            "{}",
+                                            "playlist: load: Insufficient arguments".red()
+                                        );
+                                    } else {
+                                        println!(
+                                            "{} {}",
+                                            "Playing from playlist".green(),
+                                            recieved_split[2].green().bold()
+                                        );
+                                        queue.clear();
+                                        queue = handlers::load_playlist(
+                                            recieved_split[2].clone() + ".list",
+                                        );
+                                        println!("{queue:?}");
+                                    }
                                 }
                                 cmd => {
                                     println!(

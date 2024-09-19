@@ -1,7 +1,7 @@
-use std::fs;
-use std::io::BufReader;
-
 use colored::Colorize;
+use dirs::config_dir;
+use std::fs;
+use std::io::{BufReader, Write};
 
 pub fn play(current_index: usize, queue: &Vec<String>, sink: &rodio::Sink) {
     sink.clear();
@@ -34,8 +34,62 @@ pub fn pretty_print(data: &Vec<String>, title: &str, selected: Option<usize>) {
     }
     println!("╰{}╯", "─".repeat(maxlen + 6));
 }
-pub fn show_playlists() {}
-pub fn set_playlist(queue: &Vec<String>, name: String) {}
+pub fn show_playlists() {
+    let configdir = config_dir().unwrap().join("musicman/playlists/");
+    if !configdir.exists() {
+        fs::create_dir_all(configdir).unwrap();
+        println!("{}", "No playlists".yellow().italic());
+    } else {
+        let mut playlists = Vec::new();
+        for song in fs::read_dir(configdir).unwrap() {
+            let song = song
+                .unwrap()
+                .file_name()
+                .to_str()
+                .unwrap()
+                .split('.')
+                .next()
+                .unwrap()
+                .to_string();
+            playlists.push(song);
+        }
+        if playlists.len() == 0 {
+            println!("{}", "No playlists".yellow().italic());
+        } else {
+            pretty_print(&playlists, "Playlists", None)
+        }
+    }
+}
+pub fn load_playlist(name: String) -> Vec<String> {
+    let playlist_path = config_dir()
+        .unwrap()
+        .join("musicman/playlists/")
+        .join(&name);
+    if !playlist_path.exists() {
+        println!(
+            "{} {}",
+            "playlist: load: No such playlist".red(),
+            name.red().bold()
+        );
+        return vec![];
+    } else {
+        fs::read_to_string(playlist_path)
+            .unwrap()
+            .split('\n')
+            .map(|s| s.to_string())
+            .collect()
+    }
+}
+pub fn make_playlist(queue: &Vec<String>, name: String) {
+    let configdir = config_dir().unwrap().join("musicman/playlists/");
+    if !configdir.exists() {
+        fs::create_dir_all(&configdir).unwrap();
+    }
+    let out = queue.join("\n");
+    let name = name + ".list";
+    let mut playlist_file = fs::File::create(configdir.join(name)).unwrap();
+    write!(playlist_file, "{out}").unwrap();
+}
 pub fn index_all(root: String) -> Vec<String> {
     let mut out: Vec<String> = Vec::new();
     for entry in fs::read_dir(&root).unwrap() {
