@@ -61,13 +61,16 @@ playlist creation and playing
 #### new
 saves the current queue as a playlist
 >playlist names are case sensitive (except on MacOS)
+
+<br>
+
 `Syntax: playlist new <name`
 #### show | ls
-shows all the available playlists
+shows all the available playlists<br>
 `Syntax: playlist show`<br>
 `Syntax: playlist ls`
 #### load
-load the specified playlist as the queue 
+load the specified playlist as the queue <br>
 `Syntax: playlist new <name`
 >replaces the queue!
 
