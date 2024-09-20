@@ -75,6 +75,8 @@ pub fn load_playlist(name: String) -> Vec<String> {
     } else {
         fs::read_to_string(playlist_path)
             .unwrap()
+            .trim()
+            .to_string()
             .split('\n')
             .map(|s| s.to_string())
             .collect()

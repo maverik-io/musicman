@@ -80,6 +80,7 @@ pub fn init(rx: mpsc::Receiver<String>) {
                     }
                     "replay" => {
                         handlers::play(current_index, &queue, &sink);
+                        println!("{}", "Replaying...".yellow().italic());
                     }
                     "play" | "pause" | "p" => {
                         if sink.is_paused() {
@@ -97,6 +98,7 @@ pub fn init(rx: mpsc::Receiver<String>) {
                     "next" => {
                         if queue.len() != 0 {
                             current_index = (current_index + 1) % queue.len();
+                            println!("{}", "Playing Next...".yellow().italic());
                             handlers::play(current_index, &queue, &sink);
                         } else {
                             println!("{}", "Nothing in queue".yellow().italic());
@@ -105,6 +107,7 @@ pub fn init(rx: mpsc::Receiver<String>) {
                     "prev" => {
                         if queue.len() != 0 {
                             current_index = (current_index - 1) % queue.len();
+                            println!("{}", "Playing Previous...".yellow().italic());
                             handlers::play(current_index, &queue, &sink);
                         } else {
                             println!("{}", "Nothing in queue".yellow().italic());
@@ -159,11 +162,28 @@ pub fn init(rx: mpsc::Receiver<String>) {
                                             "Playing from playlist".green(),
                                             recieved_split[2].green().bold()
                                         );
-                                        queue.clear();
-                                        queue = handlers::load_playlist(
+                                        let new_queue = handlers::load_playlist(
                                             recieved_split[2].clone() + ".list",
                                         );
-                                        println!("{queue:?}");
+                                        if new_queue.len() > 0 {
+                                            queue = new_queue.clone();
+                                            handlers::pretty_print(
+                                                &queue
+                                                    .iter()
+                                                    .map(|s| {
+                                                        s.split('/')
+                                                            .last()
+                                                            .unwrap()
+                                                            .trim()
+                                                            .to_string()
+                                                    })
+                                                    .collect(),
+                                                recieved_split[2].as_str(),
+                                                None,
+                                            );
+                                            current_index = 0;
+                                            handlers::play(current_index, &queue, &sink)
+                                        }
                                     }
                                 }
                                 cmd => {

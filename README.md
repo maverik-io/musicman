@@ -60,7 +60,12 @@ replay the current song.
 playlist creation and playing
 #### new
 saves the current queue as a playlist
+>playlist names are case sensitive (except on MacOS)
 `Syntax: playlist new <name`
+#### show | ls
+shows all the available playlists
+`Syntax: playlist show`<br>
+`Syntax: playlist ls`
 #### load
 load the specified playlist as the queue 
 `Syntax: playlist new <name`
