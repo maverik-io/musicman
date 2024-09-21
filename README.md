@@ -8,7 +8,7 @@ Recursively scans the music directory for files (all files, so please only have 
 Has a queue implemented. Queues can be saved as playlists for quick access.
 
 ## Commands
-running musicman presents you with a prompt. 
+Running musicman presents you with a prompt. 
 
 ```
 $ musicman
@@ -17,65 +17,71 @@ musicman❯
 
 ## The available commands
 ### add
-adds matches to you queue. 
+Adds matches to you queue. 
 
 `Syntax: add <search_term>`
 
 >will prompt you to choose if multiple matches are found!
 
 ### show | ls
-show the current queue.
+Show the current queue.
 
 `Syntax: show`<br>
 `Syntax: ls`
+### current | cp
+Shows the currently playing track<br>
+`Syntax: show cp` (-_-)<br>
+`Syntax: ls cp`
 
 ### p | play | pause
-pause/resume playback
+Pause/resume playback
 
 `Syntax: p`<br>
 `Syntax: play`<br>
 `Syntax: pause`
 
 ### clear
-clears queue
+Clears queue
 
 `Syntax: clear`
 
 ### next 
-skip to the next song in queue
+Skip to the next song in queue. Optionally takes the number of tracks to skip
 
-`Syntax: next`
+`Syntax: next`<br>
+`Syntax: next <n>`
 
 ### prev
-skip to the previous song in queue
+Skip to the previous song in queue. Optionally takes the number of tracks to skip
 
-`Syntax: prev`
+`Syntax: prev`<br>
+`Syntax: prev <n>`
 
 ### replay
-replay the current song.
+Replay the current song.
 
 `Syntax: replay`
 
 ### playlist 
-playlist creation and playing
+Playlist creation and playing
 #### new
-saves the current queue as a playlist
->playlist names are case sensitive (except on MacOS)
+Saves the current queue as a playlist
+>Playlist names are case sensitive (except on MacOS)
 
 <br>
 
 `Syntax: playlist new <name`
 #### show | ls
-shows all the available playlists<br>
+Shows all the available playlists<br>
 `Syntax: playlist show`<br>
 `Syntax: playlist ls`
 #### load
-load the specified playlist as the queue <br>
+Load the specified playlist as the queue <br>
 `Syntax: playlist new <name`
->replaces the queue!
+>Replaces the queue!
 
 ### exit
-quit the player
+Quit the player
 
 `Syntax: exit`
 
