@@ -3,7 +3,6 @@ use core::time;
 use std::io::Write;
 use std::io::{stdin, stdout};
 use std::process::exit;
-use std::slice::ChunksExactMut;
 use std::sync::mpsc;
 use std::thread::sleep;
 use std::usize;
