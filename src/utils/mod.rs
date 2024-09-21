@@ -3,6 +3,7 @@ use core::time;
 use std::io::Write;
 use std::io::{stdin, stdout};
 use std::process::exit;
+use std::slice::ChunksExactMut;
 use std::sync::mpsc;
 use std::thread::sleep;
 use std::usize;
@@ -20,9 +21,10 @@ pub fn init(rx: mpsc::Receiver<String>) {
             Ok(recieved) => {
                 //println!("player: `{recieved}` recieved");
                 let recieved_split = recieved
-                    .split(" ")
+                    .split_ascii_whitespace()
                     .map(|s| s.to_string())
                     .collect::<Vec<String>>();
+
                 match recieved_split[0].as_str() {
                     "add" => {
                         let blob = recieved_split[1..]
@@ -54,16 +56,20 @@ pub fn init(rx: mpsc::Receiver<String>) {
                                 let ch = rx.recv().unwrap();
                                 match ch.parse::<usize>() {
                                     Ok(val) => {
-                                        let val = val - 1;
-                                        if val > songs.len() {
-                                            println!("{}", "Adding nothing".yellow().italic());
+                                        if val == 0 {
+                                            println!("{}", "Adding nothing".yellow().italic())
                                         } else {
-                                            println!(
-                                                "{} {}",
-                                                "Adding to queue:".green().italic(),
-                                                songs[val].green().italic()
-                                            );
-                                            queue.push(songs[val].clone());
+                                            let val = val - 1;
+                                            if val > songs.len() {
+                                                println!("{}", "Adding nothing".yellow().italic());
+                                            } else {
+                                                println!(
+                                                    "{} {}",
+                                                    "Adding to queue:".green().italic(),
+                                                    songs[val].green().italic()
+                                                );
+                                                queue.push(songs[val].clone());
+                                            }
                                         }
                                     }
                                     Err(_) => println!("{}", "Adding nothing".yellow().italic()),
@@ -97,7 +103,20 @@ pub fn init(rx: mpsc::Receiver<String>) {
                     }
                     "next" => {
                         if queue.len() != 0 {
-                            current_index = (current_index + 1) % queue.len();
+                            let mut n = 1;
+                            if recieved_split.len() > 1 {
+                                match recieved_split[1].parse::<usize>() {
+                                    Ok(num) => n = num,
+                                    Err(_e) => {
+                                        println!(
+                                            "{}",
+                                            "next: argument needs to be an positive integer".red()
+                                        );
+                                        n = 0;
+                                    }
+                                }
+                            }
+                            current_index = (current_index + n) % queue.len();
                             println!("{}", "Playing Next...".yellow().italic());
                             handlers::play(current_index, &queue, &sink);
                         } else {
@@ -106,8 +125,26 @@ pub fn init(rx: mpsc::Receiver<String>) {
                     }
                     "prev" => {
                         if queue.len() != 0 {
-                            current_index = (current_index - 1) % queue.len();
-                            println!("{}", "Playing Previous...".yellow().italic());
+                            let mut n = 1;
+                            if recieved_split.len() > 1 {
+                                match recieved_split[1].parse::<usize>() {
+                                    Ok(num) => n = num,
+                                    Err(_e) => {
+                                        println!(
+                                            "{}",
+                                            "prev: argument needs to be an positive integer".red()
+                                        );
+                                        n = 0;
+                                    }
+                                }
+                            }
+                            if (current_index as i32 - n as i32) < 0 {
+                                current_index =
+                                    queue.len() - (-(current_index as i32 - n as i32) as usize);
+                            } else {
+                                current_index -= n;
+                            }
+                            println!("{}", "Playing Next...".yellow().italic());
                             handlers::play(current_index, &queue, &sink);
                         } else {
                             println!("{}", "Nothing in queue".yellow().italic());
@@ -119,19 +156,39 @@ pub fn init(rx: mpsc::Receiver<String>) {
                     }
                     "show" | "ls" => {
                         if queue.len() != 0 {
-                            handlers::pretty_print(
-                                &queue
-                                    .iter()
-                                    .map(|s| s.split('/').last().unwrap().to_string())
-                                    .collect(),
-                                "Queue",
-                                Some(current_index),
-                            )
+                            if recieved_split.len() == 2 {
+                                match recieved_split[1].as_str() {
+                                    "current" | "cp" => handlers::pretty_print(
+                                        &vec![queue[current_index]
+                                            .clone()
+                                            .split('/')
+                                            .last()
+                                            .unwrap()
+                                            .to_string()],
+                                        "Current",
+                                        Some(0),
+                                    ),
+                                    cmd => println!(
+                                        "{} {}",
+                                        "show: Unknown Command".red(),
+                                        cmd.red().bold()
+                                    ),
+                                }
+                            } else {
+                                handlers::pretty_print(
+                                    &queue
+                                        .iter()
+                                        .map(|s| s.split('/').last().unwrap().to_string())
+                                        .collect(),
+                                    "Queue",
+                                    Some(current_index),
+                                )
+                            }
                         } else {
                             println!("{}", "Nothing in queue".yellow().italic());
                         }
                     }
-                    "playlist" => {
+                    "playlist" | "pl" => {
                         if recieved_split.len() < 2 {
                             println!("{}", "playlist: Insufficient arguments".red());
                             println!("{}", "playlist <new|load|show> [name]".yellow().italic());
