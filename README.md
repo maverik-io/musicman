@@ -62,7 +62,7 @@ Replay the current song.
 
 `Syntax: replay`
 
-### playlist 
+### playlist | pl
 Playlist creation and playing
 #### new
 Saves the current queue as a playlist
