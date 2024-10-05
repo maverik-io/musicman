@@ -1,19 +1,26 @@
 use colored::Colorize;
 use core::time;
+use dirs::home_dir;
 use std::io::Write;
 use std::io::{stdin, stdout};
 use std::process::exit;
 use std::sync::mpsc;
 use std::thread::sleep;
 use std::usize;
-
 mod handlers;
 
 pub fn init(rx: mpsc::Receiver<String>) {
     let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
     let sink = rodio::Sink::try_new(&handle).unwrap();
     let mut queue: Vec<String> = Vec::new();
-    let all_songs = handlers::index_all("/home/maverikio/Music".to_string());
+    let all_songs = handlers::index_all(
+        home_dir()
+            .unwrap()
+            .join("Music")
+            .to_str()
+            .unwrap()
+            .to_string(),
+    );
     let mut current_index = 0;
     loop {
         match rx.try_recv() {

@@ -28,7 +28,7 @@ pub fn pretty_print(data: &Vec<String>, title: &str, selected: Option<usize>) {
         c += 1;
         let mut playing = "  ";
         if c == index {
-            playing = "|>"
+            playing = "▶ "
         }
         println!("│ {} {:<maxlen$}  │", playing.yellow(), s.blue());
     }
