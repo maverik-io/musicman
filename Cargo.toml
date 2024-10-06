@@ -1,6 +1,6 @@
 [package]
 name = "musicman"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Joseph Chacko <josephchacko2006@gmail.com>"]
 license = "MIT OR Apache-2.0"
 description = "Simple cli for playing music in the ~/Music folder"
