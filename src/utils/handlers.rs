@@ -1,15 +1,7 @@
 use colored::Colorize;
 use dirs::config_dir;
 use std::fs;
-use std::io::{BufReader, Write};
-
-pub fn play(current_index: usize, queue: &Vec<String>, sink: &rodio::Sink) {
-    sink.clear();
-    let song = queue[current_index].clone();
-    let file = std::fs::File::open(&song).unwrap();
-    sink.append(rodio::Decoder::new(BufReader::new(file)).unwrap());
-    sink.play();
-}
+use std::io::Write;
 
 pub fn pretty_print(data: &Vec<String>, title: &str, selected: Option<usize>) {
     let mut index = -1;

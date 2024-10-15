@@ -4,14 +4,15 @@ use dirs::home_dir;
 use std::io::Write;
 use std::io::{stdin, stdout};
 use std::process::exit;
-use std::sync::mpsc;
+use std::sync::{mpsc, Arc};
 use std::thread::sleep;
 use std::usize;
 mod handlers;
 
-pub fn init(rx: mpsc::Receiver<String>) {
+pub fn init() {
     let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
     let sink = rodio::Sink::try_new(&handle).unwrap();
+    let sink = Arc::new(sink);
     let mut queue: Vec<String> = Vec::new();
     let all_songs = handlers::index_all(
         home_dir()
@@ -22,8 +23,15 @@ pub fn init(rx: mpsc::Receiver<String>) {
             .to_string(),
     );
     let mut current_index = 0;
+    let (tx, rx) = std::sync::mpsc::channel();
+    let ui_tx = tx.clone();
+    std::thread::spawn(move || user_input(ui_tx));
+    let (player_thread, prx) = std::sync::mpsc::channel();
+    let player_sink = sink.clone();
+    std::thread::spawn(move || player(tx, prx, player_sink));
+    let mut interrupted = false;
     loop {
-        match rx.try_recv() {
+        match rx.recv() {
             Ok(recieved) => {
                 if recieved.len() != 0 {
                     //println!("player: `{recieved}` recieved");
@@ -79,6 +87,10 @@ pub fn init(rx: mpsc::Receiver<String>) {
                                                         songs[val].green().italic()
                                                     );
                                                     queue.push(songs[val].clone());
+                                                    if queue.len() == 1 {
+                                                        let song = queue[current_index].clone();
+                                                        player_thread.send(song).unwrap();
+                                                    }
                                                 }
                                             }
                                         }
@@ -94,11 +106,23 @@ pub fn init(rx: mpsc::Receiver<String>) {
                                     songs[0].green().italic()
                                 );
                                 queue.push(songs[0].clone());
+                                if queue.len() == 1 {
+                                    let song = queue[current_index].clone();
+                                    player_thread.send(song).unwrap();
+                                }
                             }
                         }
                         "replay" => {
-                            handlers::play(current_index, &queue, &sink);
-                            println!("{}", "Replaying...".yellow().italic());
+                            if !queue.is_empty() {
+                                sink.clear();
+                                let song = queue[current_index].clone();
+                                let file = std::fs::File::open(&song).unwrap();
+                                sink.append(rodio::Decoder::new(std::io::BufReader::new(file)).unwrap());
+                                sink.play();
+                                println!("{}", "Replaying...".yellow().italic());
+                            } else {
+                                println!("{}", "Queue empty.".yellow().italic());
+                            }
                         }
                         "play" | "pause" | "p" => {
                             if sink.is_paused() {
@@ -131,7 +155,10 @@ pub fn init(rx: mpsc::Receiver<String>) {
                                 }
                                 current_index = (current_index + n) % queue.len();
                                 println!("{}", "Playing Next...".yellow().italic());
-                                handlers::play(current_index, &queue, &sink);
+                                interrupted = true;
+                                sink.clear();
+                                let song = queue[current_index].clone();
+                                player_thread.send(song).unwrap();
                             } else {
                                 println!("{}", "Nothing in queue".yellow().italic());
                             }
@@ -159,7 +186,10 @@ pub fn init(rx: mpsc::Receiver<String>) {
                                     current_index -= n;
                                 }
                                 println!("{}", "Playing Next...".yellow().italic());
-                                handlers::play(current_index, &queue, &sink);
+                                interrupted = true;
+                                sink.clear();
+                                let song = queue[current_index].clone();
+                                player_thread.send(song).unwrap();
                             } else {
                                 println!("{}", "Nothing in queue".yellow().italic());
                             }
@@ -255,8 +285,10 @@ pub fn init(rx: mpsc::Receiver<String>) {
                                                     recieved_split[2].as_str(),
                                                     None,
                                                 );
-                                                current_index = 0;
-                                                handlers::play(current_index, &queue, &sink)
+                                                interrupted = true;
+                                                sink.clear();
+                                                let song = queue[0].clone();
+                                                player_thread.send(song).unwrap();
                                             }
                                         }
                                     }
@@ -274,6 +306,15 @@ pub fn init(rx: mpsc::Receiver<String>) {
                                 }
                             }
                         }
+                        "track_ended" => {
+                            if interrupted {
+                                interrupted = false;
+                            } else if !queue.is_empty() {
+                                current_index = (current_index + 1) % queue.len();
+                                let song = queue[current_index].clone();
+                                player_thread.send(song).unwrap();
+                            }
+                        }
 
                         cmd => {
                             println!("{} {}", "Unknown command".red(), cmd.red().bold());
@@ -287,18 +328,13 @@ pub fn init(rx: mpsc::Receiver<String>) {
                     }
                 }
             }
-            Err(_) => {
-                if sink.empty() && queue.len() != 0 {
-                    current_index = (current_index + 1) % queue.len();
-                    handlers::play(current_index, &queue, &sink);
-                }
-            }
+            Err(_) => {}
         }
     }
 }
 
-pub fn commandline(tx: mpsc::Sender<String>) {
-    std::thread::spawn(move || loop {
+fn user_input(tx: mpsc::Sender<String>) {
+    loop {
         sleep(time::Duration::from_millis(10));
         print!("{}", "musicman❯ ".green().bold());
         stdout().flush().unwrap();
@@ -307,5 +343,16 @@ pub fn commandline(tx: mpsc::Sender<String>) {
         input = input.trim().to_string();
         //println!("commandline: `{input}` sent");
         tx.send(input).unwrap();
-    });
+    }
+}
+
+fn player(tx: mpsc::Sender<String>, prx: mpsc::Receiver<String>, sink: Arc<rodio::Sink>) {
+    loop {
+        if let Ok(song) = prx.recv() {
+            let file = std::fs::File::open(&song).unwrap();
+            sink.append(rodio::Decoder::new(std::io::BufReader::new(file)).unwrap());
+            sink.sleep_until_end();
+            tx.send(String::from("track_ended")).unwrap();
+        }
+    }
 }
