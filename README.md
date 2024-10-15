@@ -6,6 +6,11 @@
 ## What is musicman
 Recursively scans the music directory for files (all files, so please only have music in there :P) and allows for playback of found songs. 
 Has a queue implemented. Queues can be saved as playlists for quick access.
+## Installation
+The recommended way is to build from source, or using cargo.
+```sh
+cargo install musicman
+```
 
 ## Commands
 Running musicman presents you with a prompt. 
