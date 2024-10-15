@@ -117,7 +117,9 @@ pub fn init() {
                                 sink.clear();
                                 let song = queue[current_index].clone();
                                 let file = std::fs::File::open(&song).unwrap();
-                                sink.append(rodio::Decoder::new(std::io::BufReader::new(file)).unwrap());
+                                sink.append(
+                                    rodio::Decoder::new(std::io::BufReader::new(file)).unwrap(),
+                                );
                                 sink.play();
                                 println!("{}", "Replaying...".yellow().italic());
                             } else {
@@ -351,6 +353,7 @@ fn player(tx: mpsc::Sender<String>, prx: mpsc::Receiver<String>, sink: Arc<rodio
         if let Ok(song) = prx.recv() {
             let file = std::fs::File::open(&song).unwrap();
             sink.append(rodio::Decoder::new(std::io::BufReader::new(file)).unwrap());
+            sink.play();
             sink.sleep_until_end();
             tx.send(String::from("track_ended")).unwrap();
         }
